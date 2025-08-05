@@ -50,7 +50,7 @@ Screenshots
 > Add screenshots in the 'screenshots' folder and display using Markdown like:
 
 ```
-![Homepage](screenshots/homepage.png)
+![Homepage](public/landing2.png)
 ![Itinerary Example](screenshots/itinerary.png)
 ```
 
