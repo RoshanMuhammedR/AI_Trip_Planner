@@ -1,32 +1,80 @@
-<h1 align="center">Welcome to package.json 👋</h1>
-<p>
-  <a href="https://www.npmjs.com/package/package.json" target="_blank">
-    <img alt="Version" src="https://img.shields.io/npm/v/package.json.svg">
-  </a>
-</p>
+🌍 AI Trip Planner 🚀
+====================
 
-> Developed an AI-powered trip planner that generates personalized travel itineraries based on user input such as destination, number of days, budget (cheap, moderate, luxury), and group type (solo, couple, family, friends). The application sends this data to the Google Gemini API, which returns a structured JSON response containing hotel recommendations and a day-wise itinerary. Each location in the itinerary is processed using the Google Places API to fetch accurate place details, which are then passed to the Google Images API to visually enhance the itinerary with relevant images. Users can authenticate using Google OAuth, and previously planned trips are saved and accessible for future reference, providing a seamless and visually rich travel planning experience.
+*A smart travel planning assistant powered by Google Gemini and Google APIs*
 
-### 🏠 [Homepage](AI-Powered Trip Planner is an intelligent travel assistant that helps users create customized travel itineraries based on personal preferences and constraints. Whether you're a solo traveler or planning a family vacation, this tool crafts the perfect plan tailored to your needs.)
+[![npm version](https://img.shields.io/npm/v/package.json.svg)](https://www.npmjs.com/package/package.json)
+[![GitHub stars](https://img.shields.io/github/stars/RoshanMuhammedR/AI_Trip_Planner?style=social)](https://github.com/RoshanMuhammedR/AI_Trip_Planner/stargazers)
 
-### ✨ [Demo](https://ai-trip-planner-rho-orcin.vercel.app/)
+Overview
+--------
 
-## Install
+AI Trip Planner is an intelligent travel assistant that helps users generate personalized travel itineraries based on their preferences. Whether you're a solo traveler, a couple, or a family, this application creates detailed day-wise itineraries complete with hotel suggestions and real images of the locations using the power of AI and cloud APIs.
 
-```sh
+Features
+--------
+
+- 🌐 **Google Gemini Integration**: Generates customized itineraries and hotel suggestions in JSON format based on user input.
+- 🗺️ **Google Places & Images API**: Fetches precise location details and enhances itineraries with real-world images.
+- 👤 **Google OAuth 2.0**: Enables secure user authentication and account management.
+- 📜 **Trip History**: Users can view and revisit previously planned trips.
+- 🧠 **AI Prompting**: Dynamic prompts designed to optimize responses from Gemini for travel planning.
+
+Demo
+----
+
+👉 Live Demo: https://ai-trip-planner-rho-orcin.vercel.app/
+
+Getting Started
+---------------
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/RoshanMuhammedR/AI_Trip_Planner.git
+
+# Move into the project directory
+cd AI_Trip_Planner
+
+# Install dependencies
 npm install
+
+# Start the development server
+npm run dev
 ```
 
-## Author
+Screenshots
+-----------
 
-👤 **Roshan Muhammed R**
+> Add screenshots in the 'screenshots' folder and display using Markdown like:
 
-* Github: [@RoshanMuhammedR](https://github.com/RoshanMuhammedR)
-* LinkedIn: [@roshan2004](https://linkedin.com/in/roshan2004)
+```
+![Homepage](screenshots/homepage.png)
+![Itinerary Example](screenshots/itinerary.png)
+```
 
-## Show your support
+Tech Stack
+----------
 
-Give a ⭐️ if this project helped you!
+- **Frontend**: React.js, TailwindCSS
+- **Backend**: Node.js, Express.js
+- **Authentication**: Google OAuth 2.0
+- **APIs Used**:
+  - Google Gemini API
+  - Google Places API
+  - Google Images API
+- **Deployment**: Vercel
 
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+Author
+------
+
+**Roshan Muhammed R**
+
+- GitHub: https://github.com/RoshanMuhammedR
+- LinkedIn: https://linkedin.com/in/roshan2004
+
+Show Your Support
+-----------------
+
+If you found this project helpful, please consider giving it a ⭐️ on GitHub!
