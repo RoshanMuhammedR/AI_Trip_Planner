@@ -50,7 +50,7 @@ Screenshots
 > Add screenshots in the 'screenshots' folder and display using Markdown like:
 
 ```
-![Homepage](public/landing2.png)
+![Homepage](https://github.com/RoshanMuhammedR/AI_Trip_Planner/blob/main/public/landing2.png)
 ![Itinerary Example](screenshots/itinerary.png)
 ```
 
