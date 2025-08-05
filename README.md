@@ -1,12 +1,32 @@
-# React + Vite
+<h1 align="center">Welcome to package.json 👋</h1>
+<p>
+  <a href="https://www.npmjs.com/package/package.json" target="_blank">
+    <img alt="Version" src="https://img.shields.io/npm/v/package.json.svg">
+  </a>
+</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Developed an AI-powered trip planner that generates personalized travel itineraries based on user input such as destination, number of days, budget (cheap, moderate, luxury), and group type (solo, couple, family, friends). The application sends this data to the Google Gemini API, which returns a structured JSON response containing hotel recommendations and a day-wise itinerary. Each location in the itinerary is processed using the Google Places API to fetch accurate place details, which are then passed to the Google Images API to visually enhance the itinerary with relevant images. Users can authenticate using Google OAuth, and previously planned trips are saved and accessible for future reference, providing a seamless and visually rich travel planning experience.
 
-Currently, two official plugins are available:
+### 🏠 [Homepage](AI-Powered Trip Planner is an intelligent travel assistant that helps users create customized travel itineraries based on personal preferences and constraints. Whether you're a solo traveler or planning a family vacation, this tool crafts the perfect plan tailored to your needs.)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### ✨ [Demo](https://ai-trip-planner-rho-orcin.vercel.app/)
 
-## Expanding the ESLint configuration
+## Install
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```sh
+npm install
+```
+
+## Author
+
+👤 **Roshan Muhammed R**
+
+* Github: [@RoshanMuhammedR](https://github.com/RoshanMuhammedR)
+* LinkedIn: [@roshan2004](https://linkedin.com/in/roshan2004)
+
+## Show your support
+
+Give a ⭐️ if this project helped you!
+
+***
+_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
