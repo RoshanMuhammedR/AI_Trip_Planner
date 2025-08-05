@@ -44,16 +44,6 @@ npm install
 npm run dev
 ```
 
-Screenshots
------------
-
-> Add screenshots in the 'screenshots' folder and display using Markdown like:
-
-```
-![Homepage](https://github.com/RoshanMuhammedR/AI_Trip_Planner/blob/main/public/landing2.png)
-![Itinerary Example](screenshots/itinerary.png)
-```
-
 Tech Stack
 ----------
 
