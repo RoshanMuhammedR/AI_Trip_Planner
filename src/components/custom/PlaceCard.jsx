@@ -22,7 +22,7 @@ const PlaceCard = ({place,trip_place}) => {
       }
   return (
     <Link to={'https://www.google.com/maps/search/?api=1&query='+place.placeName+','+trip_place} target='_blank'>
-        <div className='border rounded-xl p-3 mt-2 flex gap-5 hover:scale-105 transition-all hover:shadow'>
+        <div className='border rounded-xl p-3 mt-2 flex-cols lg:flex gap-5 hover:scale-105 transition-all hover:shadow '>
         <img src={photoUrl?photoUrl:'/placeholder.jpg'} className='size-[150px] rounded-xl object-cover' />
         <div className='flex flex-col gap-2'>
             <h2 className='font-bold text-lg'>{place.placeName}</h2>

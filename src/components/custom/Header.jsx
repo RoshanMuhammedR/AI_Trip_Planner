@@ -56,10 +56,10 @@ const Header = () => {
       </a>
       {user ?
         <div className='flex items-center gap-2'>
-          <a href='/create-trip'>
-            <Button variant='outline' className='rounded-full'>+ Create Trip</Button>
+          <a href='/create-trip' className='hidden md:block'>
+            <Button variant='outline' className='rounded-full '>+ Create Trip</Button>
           </a>
-          <a href='/my-trips'>
+          <a href='/my-trips' className='hidden md:block'>
             <Button variant='outline' className='rounded-full'>My Trip</Button>
           </a>
           <Popover>
@@ -67,11 +67,16 @@ const Header = () => {
               <img src={user?.picture} className='size-[35px] rounded-full' />
             </PopoverTrigger>
             <PopoverContent>
-              <h2 onClick={() => {
-                googleLogout();
-                localStorage.clear();
-                window.location.reload();
-              }} className='cursor-pointer'>Logout</h2>
+              <div className='flex flex-col gap-3'>
+                <h2 onClick={() => {
+                  googleLogout();
+                  localStorage.clear();
+                  window.location.reload();
+                }} className='cursor-pointer'>Logout</h2>
+                <a href="/create-trip"><h2>Create Trip</h2></a>
+                <a href="/my-trips"><h2>My Trips</h2></a>
+              </div>
+              
             </PopoverContent>
           </Popover>
         </div>

@@ -8,7 +8,7 @@ const PlacesToVisit = ({trip}) => {
       
       <div>
         {trip?.tripData.itinerary.map((Day,index)=>(
-            <div key={index} className='mt-5'>
+            <div key={index} className='mt-3'>
                 <h2 className='font-bold text-lg'>Day {Day.day}</h2>
                 <p className='text-gray-600'>{Day.theme}</p>
                 <p className="text-sm text-gray-700 mb-3">

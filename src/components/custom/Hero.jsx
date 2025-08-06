@@ -17,7 +17,7 @@ const Hero = () => {
         <Button size="lg" className='z-30'>Get Started, It's Free</Button>
       </Link>
 
-      <img src='/landing2.png' className='-mt-20 -z-20' />
+      <img src='/landing2.png' className='-mt-10 md:-mt-20 -z-20 ' />
     </div>
   )
 }
