@@ -1,0 +1,11 @@
+.next
+node_modules
+drizzle
+pnpm-lock.yaml
+package-lock.json
+*.md
+
+# Editor / tooling local state, not project source
+.claude
+.vscode
+.vercel
