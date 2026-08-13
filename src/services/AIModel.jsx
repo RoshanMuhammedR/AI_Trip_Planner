@@ -1,100 +1,13 @@
-// To run this code you need to install the following dependencies:
-// npm install @google/genai mime
-// npm install -D @types/node
+// Uses AICredits (https://aicredits.in) — an OpenAI-compatible gateway to Gemini and other models.
 
-import {
-  GoogleGenAI,
-} from '@google/genai';
+import axios from 'axios';
 
-export async function main(userPrompt) {
-  const ai = new GoogleGenAI({
-    apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-  });
-  const tools = [
-    {
-      googleSearch: {
-      }
-    },
-  ];
-  const config = {
-    thinkingConfig: {
-      thinkingBudget: -1,
-    },
-    tools,
-  };
-  const model = 'gemini-2.5-pro';
-  const contents = [
-    {
-      role: 'user',
-      parts: [
-        {
-          text: `Generate Travel Plan for Location: Las Vegas, for 3 Days for Couple with a Cheap budget, Give me a Hotels options list with HotelName, Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and suggest itinerary with placeName, Place Details, Place Image Url, Geo Coordinates, ticket Pricing, rating, Time travel each of the location for 3 days with each day plan with best time to visit in JSON format (only JSON in reply no extra non json required). `,
-        },
-      ],
-    },
-    {
-      role: 'model',
-      parts: [
-        {
-          text: `**Searching Vegas Hotels**
+const AICREDITS_BASE_URL = 'https://api.aicredits.in/v1';
+const MODEL = 'google/gemini-3.1-flash-lite-preview';
 
-I've initiated a Google search to identify economical hotel choices in Las Vegas suitable for a couple. My aim is to extract crucial data points, including hotel names, addresses, pricing information, image URLs, geographic coordinates, ratings, and succinct descriptions.
+const exampleUserPrompt = `Generate Travel Plan for Location: Las Vegas, for 3 Days for Couple with a Cheap budget, Give me a Hotels options list with HotelName, Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and suggest itinerary with placeName, Place Details, Place Image Url, Geo Coordinates, ticket Pricing, rating, Time travel each of the location for 3 days with each day plan with best time to visit in JSON format (only JSON in reply no extra non json required). `;
 
-
-**Gathering Activity Data**
-
-Now I'm diving into the parallel task of finding free and cheap attractions in Las Vegas. I'm focusing on places couples might enjoy and diligently gathering data like place names, details, image URLs, coordinates, ticket prices, ratings, and suggested visit times. This information will integrate seamlessly with my hotel and travel data to build the ultimate 3-day plan.
-
-
-**Discovering Las Vegas Deals**
-
-I've already completed the initial research. I now have a solid foundation of information, including data on budget-friendly hotels and free or low-cost activities in Las Vegas, such as public transport. Several hotel options are looking promising.
-
-
-**Narrowing Hotel Choices**
-
-I've refined my hotel research further. I am targeting specific details for promising budget hotels like Circus Circus, Excalibur, and The STRAT, focusing on current pricing, images, and coordinates. Regarding the itinerary, I will organize free attractions and low-cost options into a coherent 3-day plan, gathering addresses, costs, and image URLs. I will factor in travel times considering the Deuce bus and monorail.
-
-
-**Gathering Specific Hotel Data**
-
-I've conducted the initial Google searches and compiled budget hotel and free activity data for Las Vegas, including public transportation info. I've pinpointed Circus Circus, Excalibur, The STRAT, and Luxor as promising, but still need pricing, image URLs, and geo-coordinates. I'm structuring a 3-day itinerary with free attractions like the Bellagio Fountains and Fremont Street, incorporating the Deuce bus and monorail travel times. I'll target detailed searches to fulfill the itinerary's JSON requirements: addresses, costs, and image URLs.
-
-
-**Seeking Affordable Options**
-
-I've compiled info on budget-friendly hotels and free attractions. Hotel reviews and addresses are in hand. I still need concrete price ranges for the hotels.
-
-
-**Analyzing Missing Data Points**
-
-My focus is now on the missing data. I've gathered addresses, descriptions, and free status details for attractions, along with hotel addresses and reviews.  Concrete prices, direct image URLs for both, and geo-coordinates are what I lack.  My current plan is to use existing information to search official hotel sites and booking pages, working towards a structured itinerary.
-
-
-**Compiling Missing Details**
-
-My focus is now on those missing data points, specifically hotel prices, image URLs, and geo-coordinates. I have hotel addresses, reviews, and attraction details. I'm actively searching hotel websites and booking platforms for accurate price ranges and direct image URLs. I am also working on obtaining geo-coordinates for all locations. My plan is to next create a structured 3-day itinerary, including estimated travel times.
-
-
-**Analyzing Preliminary Findings**
-
-I've successfully compiled a substantial dataset, including geo-coordinates and initial pricing details for hotels. Furthermore, I have assembled data on several free attractions, encompassing their descriptions and precise locations. This foundational information allows me to commence initial analysis and begin generating preliminary results.
-
-
-**Constructing the JSON Structure**
-
-I've progressed to the JSON construction phase, focusing on a 3-day itinerary and a selection of budget-friendly hotels. While I've gathered location data and attraction descriptions, I'm addressing missing hotel prices with ranges and managing image URLs using placeholders or open-source options. I'll now estimate travel times and structure the output into a single, cohesive JSON object. Given the search tool limitations, reasonable estimates will guide this final JSON generation.
-
-
-**Generating the JSON Output**
-
-I'm now in the process of generating the JSON output, having successfully compiled location data, attraction details, and initial hotel information. I've addressed the challenges of fluctuating hotel prices by incorporating price ranges and managing image URLs using placeholders or open-source alternatives. I'm focusing on crafting a structured 3-day itinerary centered around budget-friendly options and will now estimate travel times to build the complete JSON object. My current step focuses on constructing the JSON as a single cohesive object as requested, keeping track of the search tool's constraints.
-
-
-`,
-        },
-        {
-          text: `\`\`\`json
+const exampleAssistantReply = `\`\`\`json
 {
   "travelPlan": {
     "location": "Las Vegas",
@@ -124,7 +37,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           "longitude": -115.1568
         },
         "rating": 3.5,
-        "description": "Located at the north end of the Strip, this hotel is known for its iconic tower with thrill rides and observation decks, offering budget-friendly rooms and various dining choices. [4, 49]"
+        "description": "Located at the north end of the Strip, this hotel is known for its iconic tower with thrill rides and observation decks, offering budget-friendly rooms and various dining choices."
       },
       {
         "hotelName": "Luxor Hotel & Casino",
@@ -136,7 +49,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           "longitude": -115.1761
         },
         "rating": 3.5,
-        "description": "A distinctive pyramid-shaped hotel and casino on the Strip, featuring a large atrium, a variety of entertainment options, and comfortable, affordable rooms. [33, 35]"
+        "description": "A distinctive pyramid-shaped hotel and casino on the Strip, featuring a large atrium, a variety of entertainment options, and comfortable, affordable rooms."
       },
       {
         "hotelName": "Circus Circus Hotel & Casino",
@@ -148,7 +61,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           "longitude": -115.1646
         },
         "rating": 3,
-        "description": "A family-friendly hotel with a circus theme, offering very affordable rates, a casino, and the Adventuredome indoor amusement park. [28, 36]"
+        "description": "A family-friendly hotel with a circus theme, offering very affordable rates, a casino, and the Adventuredome indoor amusement park."
       },
       {
         "hotelName": "Flamingo Las Vegas Hotel & Casino",
@@ -160,7 +73,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           "longitude": -115.1708
         },
         "rating": 3.5,
-        "description": "A classic Las Vegas hotel with a vibrant, tropical theme, a central Strip location, and the popular Flamingo Wildlife Habitat. [42, 45]"
+        "description": "A classic Las Vegas hotel with a vibrant, tropical theme, a central Strip location, and the popular Flamingo Wildlife Habitat."
       }
     ],
     "itinerary": [
@@ -171,7 +84,7 @@ I'm now in the process of generating the JSON output, having successfully compil
         "plan": [
           {
             "placeName": "Welcome to Fabulous Las Vegas Sign",
-            "placeDetails": "The iconic neon sign that has welcomed visitors to Las Vegas since 1959. A must-do photo opportunity. It is located in the median at 5100 Las Vegas Boulevard South. [2, 7]",
+            "placeDetails": "The iconic neon sign that has welcomed visitors to Las Vegas since 1959. A must-do photo opportunity. It is located in the median at 5100 Las Vegas Boulevard South.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Welcome_to_Fabulous_Las_Vegas_sign.jpg/1280px-Welcome_to_Fabulous_Las_Vegas_sign.jpg",
             "geoCoordinates": {
               "latitude": 36.0821,
@@ -183,7 +96,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           },
           {
             "placeName": "Flamingo Wildlife Habitat",
-            "placeDetails": "A serene and beautiful four-acre garden inside the Flamingo Hotel, home to Chilean flamingos, other exotic birds, turtles, and fish. A great free attraction to escape the hustle of the Strip. [4, 12, 22, 26]",
+            "placeDetails": "A serene and beautiful four-acre garden inside the Flamingo Hotel, home to Chilean flamingos, other exotic birds, turtles, and fish. A great free attraction to escape the hustle of the Strip.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/9/98/The_Wildlife_Habitat_-_Flamingo_Hotel_%26_Casino_Las_Vegas.jpg",
             "geoCoordinates": {
               "latitude": 36.1164,
@@ -195,7 +108,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           },
           {
             "placeName": "Bellagio Conservatory & Botanical Gardens",
-            "placeDetails": "A stunning 14,000-square-foot floral paradise inside the Bellagio Hotel. The displays change seasonally and are always breathtaking. It's a free and highly-rated attraction. [3, 5, 9, 30]",
+            "placeDetails": "A stunning 14,000-square-foot floral paradise inside the Bellagio Hotel. The displays change seasonally and are always breathtaking. It's a free and highly-rated attraction.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Bellagio_Conservatory_Chihuly.jpg/1280px-Bellagio_Conservatory_Chihuly.jpg",
             "geoCoordinates": {
               "latitude": 36.1126,
@@ -226,7 +139,7 @@ I'm now in the process of generating the JSON output, having successfully compil
         "plan": [
           {
             "placeName": "Grand Canal Shoppes at The Venetian Resort",
-            "placeDetails": "A unique shopping mall with cobblestone walkways, a painted sky ceiling, and a quarter-mile-long Grand Canal where you can watch the gondolas. It's free to walk around and window shop. [23, 27, 31, 32]",
+            "placeDetails": "A unique shopping mall with cobblestone walkways, a painted sky ceiling, and a quarter-mile-long Grand Canal where you can watch the gondolas. It's free to walk around and window shop.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Grand_Canal_Shoppes_-_St._Mark%27s_Square.jpg/1280px-Grand_Canal_Shoppes_-_St._Mark%27s_Square.jpg",
             "geoCoordinates": {
               "latitude": 36.1214,
@@ -238,7 +151,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           },
           {
             "placeName": "Fall of Atlantis Show",
-            "placeDetails": "A free animatronic show inside the Forum Shops at Caesars Palace. It features fire, water, and talking statues telling the story of Atlantis. The show runs every hour. [24, 25, 28]",
+            "placeDetails": "A free animatronic show inside the Forum Shops at Caesars Palace. It features fire, water, and talking statues telling the story of Atlantis. The show runs every hour.",
             "placeImageUrl": "https://i.ytimg.com/vi/5g_p3ZKHV5c/maxresdefault.jpg",
             "geoCoordinates": {
               "latitude": 36.1167,
@@ -250,7 +163,7 @@ I'm now in the process of generating the JSON output, having successfully compil
           },
           {
             "placeName": "LINQ Promenade",
-            "placeDetails": "An open-air shopping, dining, and entertainment district. It's free to walk around and enjoy the atmosphere, street performers, and vibrant energy. [6, 11, 17, 18]",
+            "placeDetails": "An open-air shopping, dining, and entertainment district. It's free to walk around and enjoy the atmosphere, street performers, and vibrant energy.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/The_Linq_at_night.jpg/1280px-The_Linq_at_night.jpg",
             "geoCoordinates": {
               "latitude": 36.1179,
@@ -269,7 +182,7 @@ I'm now in the process of generating the JSON output, having successfully compil
         "plan": [
           {
             "placeName": "Fremont Street Experience",
-            "placeDetails": "A vibrant pedestrian mall in Downtown Las Vegas, famous for its Viva Vision light shows on the world's largest video screen, free live music on multiple stages, and a lively atmosphere. [8, 10, 13, 14, 15]",
+            "placeDetails": "A vibrant pedestrian mall in Downtown Las Vegas, famous for its Viva Vision light shows on the world's largest video screen, free live music on multiple stages, and a lively atmosphere.",
             "placeImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Fremont_Street_Experience%2C_Las_Vegas%2C_2016.jpg/1920px-Fremont_Street_Experience%2C_Las_Vegas%2C_2016.jpg",
             "geoCoordinates": {
               "latitude": 36.1707,
@@ -284,32 +197,31 @@ I'm now in the process of generating the JSON output, having successfully compil
     ]
   }
 }
-\`\`\``,
-        },
-      ],
-    },
-    {
-      role: 'user',
-      parts: [
-        {
-          text: userPrompt,
-        },
-      ],
-    },
+\`\`\``;
+
+export async function main(userPrompt) {
+  const messages = [
+    { role: 'user', content: exampleUserPrompt },
+    { role: 'assistant', content: exampleAssistantReply },
+    { role: 'user', content: userPrompt },
   ];
 
-  const response = await ai.models.generateContentStream({
-    model,
-    config,
-    contents,
-  });
+  const response = await axios.post(
+    `${AICREDITS_BASE_URL}/chat/completions`,
+    {
+      model: MODEL,
+      messages,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${import.meta.env.VITE_AICREDITS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 
-  let result = '';
-  for await (const chunk of response) {
-    result += chunk.text;
-  }
+  const result = response.data?.choices?.[0]?.message?.content ?? '';
 
-  
   const jsonMatch = result.match(/```json([\s\S]*?)```/);
   const jsonString = jsonMatch ? jsonMatch[1].trim() : result.trim();
 
@@ -320,4 +232,3 @@ I'm now in the process of generating the JSON output, having successfully compil
     console.error('Failed to parse JSON:', e);
   }
 }
-

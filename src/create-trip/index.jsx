@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete'
+import React, { useEffect, useRef, useState } from 'react'
 import { loadGoogleScript } from '@/utils/loadGoogleScript.js'
 import { Input } from '@/components/ui/input';
 import { budgetOptions, companionsOptions, PROMPT } from '@/constants/options';
@@ -29,16 +28,57 @@ import { useNavigate } from 'react-router-dom';
 
 function CreateTrip() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [place, setPlace] = useState();
+  const [locationQuery, setLocationQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [form, setForm] = useState();
   const [showDialogue, setShowDialogue] = useState(false);
   const [searching, setSearching] = useState(false);
+  const sessionTokenRef = useRef(null);
+  const debounceRef = useRef(null);
   const handleFormChange = (name, value) => {
     setForm({
       ...form,
       [name]: value
     })
   }
+
+  const fetchSuggestions = async (input) => {
+    if (!input || !window.google?.maps?.places?.AutocompleteSuggestion) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      if (!sessionTokenRef.current) {
+        sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+      }
+      const { suggestions: results } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input,
+        sessionToken: sessionTokenRef.current,
+      });
+      setSuggestions(results || []);
+    } catch (error) {
+      console.error('Failed to fetch place suggestions:', error);
+      setSuggestions([]);
+    }
+  };
+
+  const handleLocationInputChange = (e) => {
+    const value = e.target.value;
+    setLocationQuery(value);
+    setShowSuggestions(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    const text = suggestion.placePrediction.text.text;
+    setLocationQuery(text);
+    handleFormChange('location', text);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    sessionTokenRef.current = null;
+  };
 
   const navigate = useNavigate();
 
@@ -119,6 +159,7 @@ function CreateTrip() {
         clearInterval(interval)
       }
     }, 100)
+    return () => clearInterval(interval)
   }, []);
 
   return (
@@ -128,19 +169,28 @@ function CreateTrip() {
         Just provide some basic information, and our trip planner will generate a customised itinerary based on your preferences.
       </p>
       <div className='mt-20 flex flex-col gap-10'>
-        <div>
+        <div className='relative'>
           <h2 className='text-xl my-3 font-medium'>What is the destination of choice?</h2>
-          {isLoaded && (
-            <GooglePlacesAutocomplete
-              apiKey={import.meta.env.VITE_GOOGLE_PLACE_API_KEY}
-              selectProps={{
-                place,
-                onChange: (e) => {
-                  setPlace(e);
-                  handleFormChange('location', e.label);
-                }
-              }}
-            />
+          <Input
+            value={locationQuery}
+            placeholder='Search for a destination'
+            disabled={!isLoaded}
+            onChange={handleLocationInputChange}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className='absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-auto shadow-lg'>
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  className='px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm'
+                  onMouseDown={() => handleSelectSuggestion(suggestion)}
+                >
+                  {suggestion.placePrediction.text.text}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
         <div>
