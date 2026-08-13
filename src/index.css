@@ -83,42 +83,11 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  /* Lifted and desaturated so the brand keeps enough contrast on dark surfaces. */
-  --brand: oklch(0.72 0.055 250);
-  --brand-foreground: oklch(0.16 0.02 253);
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: var(--brand);
-  --primary-foreground: var(--brand-foreground);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* The app is light-only. The `dark` custom variant above is deliberately kept
+   even though no .dark class is ever applied: Tailwind v4's built-in dark
+   variant falls back to prefers-color-scheme, so removing it would let the
+   leftover dark: utilities in src/components/ui/* activate for anyone whose OS
+   is set to dark. Class-gating them with no .dark on the page keeps them inert. */
 
 @layer base {
   * {
@@ -133,8 +102,7 @@
    palette (dark tokens waste ink and render grey blocks), and keep cards whole
    across page breaks. */
 @media print {
-  :root,
-  .dark {
+  :root {
     --background: #fff;
     --foreground: #111;
     --card: #fff;

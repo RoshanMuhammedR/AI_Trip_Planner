@@ -112,31 +112,41 @@ const ViewTrip = () => {
   };
 
   return (
-    <Container className='py-10'>
+    <Container className='py-10 max-w-7xl'>
       <InfoSection trip={trip} />
       <Hotels trip={trip} />
 
-      <TripMap
-        trip={trip}
-        activeKey={activeKey}
-        onSelectPlace={handleSelectPlace}
-        className='mt-8 h-[320px] lg:h-[420px]'
-      />
+      {/* One map instance, reordered by CSS: above the itinerary on mobile,
+          sticky beside it on desktop. Rendering it twice would mount Google
+          Maps twice. */}
+      <div className='mt-8 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8 lg:items-start'>
+        <div className='order-2 lg:order-1'>
+          {/* Owner-only in the UI; firestore.rules enforces it server-side too. */}
+          {isOwner && hasGeneratedDays && (
+            <RefineBar days={trip.itinerary} onRefine={refineDay} busy={refining} />
+          )}
 
-      {/* Owner-only in the UI; firestore.rules enforces it server-side too. */}
-      {isOwner && hasGeneratedDays && (
-        <RefineBar days={trip.itinerary} onRefine={refineDay} busy={refining} />
-      )}
+          <PlacesToVisit
+            trip={trip}
+            generatingDays={generatingDays}
+            failedDays={failedDays}
+            onRetryDay={retryDay}
+            canRetry={isOwner}
+            activeKey={activeKey}
+            onHoverPlace={setActiveKey}
+          />
+        </div>
 
-      <PlacesToVisit
-        trip={trip}
-        generatingDays={generatingDays}
-        failedDays={failedDays}
-        onRetryDay={retryDay}
-        canRetry={isOwner}
-        activeKey={activeKey}
-        onHoverPlace={setActiveKey}
-      />
+        <div className='order-1 mb-6 lg:order-2 lg:mb-0 lg:sticky lg:top-6'>
+          <TripMap
+            trip={trip}
+            activeKey={activeKey}
+            onSelectPlace={handleSelectPlace}
+            onHoverPlace={setActiveKey}
+            className='h-[300px] lg:h-[calc(100vh-8rem)]'
+          />
+        </div>
+      </div>
     </Container>
   )
 }

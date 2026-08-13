@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/popover"
 import { Link } from 'react-router-dom';
 import SignInDialog from './SignInDialog';
-import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 
 
@@ -21,7 +20,6 @@ const Header = () => {
         <img src='/logo.svg' alt='AI Trip Planner' className='h-10' />
       </Link>
       <div className='flex items-center gap-2'>
-        <ThemeToggle />
         {user ?
         <>
           <Link to='/create-trip' className='hidden md:block'>
