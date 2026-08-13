@@ -12,11 +12,16 @@ import { normalizeTrip } from '@/lib/tripSchema';
 import { useTripGeneration } from '@/hooks/useTripGeneration';
 import { useAuth } from '@/contexts/AuthContext';
 import NotFound from '@/components/layout/NotFound';
+import TripMap from '../components/TripMap';
+import RefineBar from '../components/RefineBar';
+import { useTripRefine } from '@/hooks/useTripRefine';
 
 const ViewTrip = () => {
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
+  // Shared between the map and the cards, so hovering one highlights the other.
+  const [activeKey, setActiveKey] = useState(null);
   const { tripId } = useParams();
   const { user } = useAuth();
 
@@ -66,6 +71,15 @@ const ViewTrip = () => {
     onDayGenerated: handleDayGenerated,
   });
 
+  const { refineDay, busy: refining } = useTripRefine({
+    trip,
+    tripId,
+    onDayChanged: handleDayGenerated,
+  });
+
+  // Nothing to refine until at least one day has finished generating.
+  const hasGeneratedDays = Boolean(trip?.itinerary?.some((d) => d.plan !== null));
+
   if (missing) return <NotFound />;
 
   if (loading) {
@@ -89,16 +103,39 @@ const ViewTrip = () => {
     );
   }
 
+  // Clicking a marker scrolls its card into view and flashes the highlight.
+  const handleSelectPlace = (point) => {
+    setActiveKey(point.key);
+    document
+      .getElementById(`place-${point.key}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <Container className='py-10'>
       <InfoSection trip={trip} />
       <Hotels trip={trip} />
+
+      <TripMap
+        trip={trip}
+        activeKey={activeKey}
+        onSelectPlace={handleSelectPlace}
+        className='mt-8 h-[320px] lg:h-[420px]'
+      />
+
+      {/* Owner-only in the UI; firestore.rules enforces it server-side too. */}
+      {isOwner && hasGeneratedDays && (
+        <RefineBar days={trip.itinerary} onRefine={refineDay} busy={refining} />
+      )}
+
       <PlacesToVisit
         trip={trip}
         generatingDays={generatingDays}
         failedDays={failedDays}
         onRetryDay={retryDay}
         canRetry={isOwner}
+        activeKey={activeKey}
+        onHoverPlace={setActiveKey}
       />
     </Container>
   )

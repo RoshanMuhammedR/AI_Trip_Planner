@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { loadGoogleScript } from '@/utils/loadGoogleScript.js'
+import React, { useRef, useState } from 'react'
+import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { Input } from '@/components/ui/input';
 import { budgetOptions, companionsOptions } from '@/constants/options';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,10 @@ import OptionCard from './components/OptionCard';
 function CreateTrip() {
   const { user } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Resolves once the Places library is ready — replaces the manual script tag
+  // plus a 100ms setInterval polling window.google.
+  const placesLib = useMapsLibrary('places');
+  const isLoaded = Boolean(placesLib);
   const [locationQuery, setLocationQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -39,15 +42,17 @@ function CreateTrip() {
   }
 
   const fetchSuggestions = async (input) => {
-    if (!input || !window.google?.maps?.places?.AutocompleteSuggestion) {
+    if (!input || !placesLib?.AutocompleteSuggestion) {
       setSuggestions([]);
       return;
     }
     try {
+      // One session token per lookup-then-select cycle keeps autocomplete
+      // billed as a single session.
       if (!sessionTokenRef.current) {
-        sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+        sessionTokenRef.current = new placesLib.AutocompleteSessionToken();
       }
-      const { suggestions: results } = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+      const { suggestions: results } = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions({
         input,
         sessionToken: sessionTokenRef.current,
       });
@@ -169,17 +174,6 @@ function CreateTrip() {
     });
     navigate('/view-trip/' + docID);
   }
-
-  useEffect(() => {
-    loadGoogleScript()
-    const interval = setInterval(() => {
-      if (window.google) {
-        setIsLoaded(true)
-        clearInterval(interval)
-      }
-    }, 100)
-    return () => clearInterval(interval)
-  }, []);
 
   return (
     <Container className='mt-10'>

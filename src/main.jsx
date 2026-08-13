@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import CreateTrip from './create-trip'
 import { Toaster } from './components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
+import { APIProvider } from '@vis.gl/react-google-maps'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ViewTrip from './view-trip/[tripId]/index.jsx'
 import MyTrips from './my-trips'
@@ -32,10 +33,17 @@ createRoot(document.getElementById('root')).render(
     {/* attribute="class" matches the `@custom-variant dark (&:is(.dark *))`
         already declared in index.css. */}
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <AuthProvider>
-        <Toaster position="top-center" richColors />
-        <RouterProvider router={router} />
-      </AuthProvider>
+      {/* Owns Maps script loading for the whole app, replacing the manual
+          <script> injection and the 100ms polling for window.google. */}
+      <APIProvider
+        apiKey={import.meta.env.VITE_GOOGLE_PLACE_API_KEY}
+        libraries={['places', 'marker']}
+      >
+        <AuthProvider>
+          <Toaster position="top-center" richColors />
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </APIProvider>
     </ThemeProvider>
   </StrictMode>,
 )

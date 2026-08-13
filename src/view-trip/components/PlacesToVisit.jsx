@@ -4,7 +4,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { formatDayDate } from '@/lib/tripSchema'
 
-const PlacesToVisit = ({ trip, generatingDays, failedDays, onRetryDay, canRetry }) => {
+const PlacesToVisit = ({
+  trip,
+  generatingDays,
+  failedDays,
+  onRetryDay,
+  canRetry,
+  activeKey,
+  onHoverPlace,
+}) => {
   const itinerary = trip?.itinerary ?? []
 
   return (
@@ -57,13 +65,20 @@ const PlacesToVisit = ({ trip, generatingDays, failedDays, onRetryDay, canRetry 
                 <p className='text-sm text-gray-500'>No places suggested for this day.</p>
               ) : (
                 <div className='grid md:grid-cols-2 gap-5'>
-                  {day.plan.map((place, i) => (
-                    <PlaceCard
-                      key={`${place.placeName}-${i}`}
-                      place={place}
-                      trip_place={trip.location}
-                    />
-                  ))}
+                  {day.plan.map((place, i) => {
+                    // Must match the key TripMap builds for its markers.
+                    const key = `${index}-${i}`
+                    return (
+                      <div key={key} id={`place-${key}`}>
+                        <PlaceCard
+                          place={place}
+                          trip_place={trip.location}
+                          isActive={activeKey === key}
+                          onHover={(p) => onHoverPlace?.(p ? key : null)}
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </section>
