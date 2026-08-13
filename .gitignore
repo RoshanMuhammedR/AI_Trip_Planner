@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Vercel CLI project link (contains project/org IDs)
+.vercel

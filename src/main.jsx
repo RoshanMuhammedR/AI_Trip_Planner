@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import CreateTrip from './create-trip'
 import { Toaster } from './components/ui/sonner'
+import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ViewTrip from './view-trip/[tripId]/index.jsx'
 import MyTrips from './my-trips'
@@ -28,9 +29,13 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <Toaster position="top-center" />
-      <RouterProvider router={router} />
-    </AuthProvider>
+    {/* attribute="class" matches the `@custom-variant dark (&:is(.dark *))`
+        already declared in index.css. */}
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <AuthProvider>
+        <Toaster position="top-center" richColors />
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

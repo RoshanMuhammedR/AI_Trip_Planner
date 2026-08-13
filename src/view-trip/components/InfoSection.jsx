@@ -1,12 +1,14 @@
-import { Button } from '@/components/ui/button';
 import React from 'react'
-import { IoIosSend } from "react-icons/io";
-import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto';
-
+import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
+import { Badge } from '@/components/ui/badge'
+import { formatDayDate, formatCost } from '@/lib/tripSchema'
+import ShareMenu from './ShareMenu'
 
 const InfoSection = ({ trip }) => {
-  const location = trip?.userSelection?.location
+  const location = trip?.location
   const photoUrl = usePlacePhoto(location)
+  const startDate = formatDayDate(trip?.startDate)
+  const total = formatCost(trip?.totalEstimatedCost)
 
   return (
     <div>
@@ -14,27 +16,22 @@ const InfoSection = ({ trip }) => {
         src={photoUrl}
         onError={handleImageError}
         alt={location ?? 'Trip destination'}
-        className='h-[340px] w-full object-cover rounded-xl'
+        className='h-[240px] sm:h-[340px] w-full object-cover rounded-xl'
       />
 
-      <div className='flex justify-between items-center'>
-        <div className='my-5 flex flex-col gap-2'>
-          <h2 className='font-bold text-2xl'>{location}</h2>
-          <div className='flex flex-col gap-5 mt-3 lg:flex-row text-lg'>
-            <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 '>
-              📅 {trip?.userSelection?.noOfDays} Day(s)
-            </h2>
-            <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 '>
-              💰 {trip?.userSelection?.budget} Budget
-            </h2>
-            <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 '>
-              👤 No. Of Travellers - {trip?.userSelection?.people}
-            </h2>
+      <div className='flex justify-between items-start gap-4 mt-5 flex-wrap'>
+        <div className='flex flex-col gap-3'>
+          <h1 className='font-bold text-2xl sm:text-3xl'>{location}</h1>
+          <div className='flex flex-wrap gap-2'>
+            <Badge variant='secondary'>📅 {trip?.duration} Day(s)</Badge>
+            {startDate && <Badge variant='secondary'>🗓️ From {startDate}</Badge>}
+            <Badge variant='secondary'>💰 {trip?.budget} Budget</Badge>
+            <Badge variant='secondary'>👤 {trip?.travelerType}</Badge>
+            {total && <Badge variant='secondary'>≈ {total} total</Badge>}
           </div>
         </div>
-        <Button><IoIosSend /></Button>
+        <ShareMenu trip={trip} />
       </div>
-
     </div>
   )
 }

@@ -16,6 +16,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -43,14 +45,19 @@
 
 :root {
   --radius: 0.625rem;
+  /* Brand #2C3E50. Was hardcoded as an arbitrary value in six places, including
+     the button's default variant — whose hover fell back to --primary
+     (near-black), so buttons changed hue on hover. */
+  --brand: oklch(0.353 0.043 253.4);
+  --brand-foreground: oklch(0.985 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -77,14 +84,17 @@
 }
 
 .dark {
+  /* Lifted and desaturated so the brand keeps enough contrast on dark surfaces. */
+  --brand: oklch(0.72 0.055 250);
+  --brand-foreground: oklch(0.16 0.02 253);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -116,5 +126,48 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Print / Save as PDF: drop chrome and interactive controls, force a light
+   palette (dark tokens waste ink and render grey blocks), and keep cards whole
+   across page breaks. */
+@media print {
+  :root,
+  .dark {
+    --background: #fff;
+    --foreground: #111;
+    --card: #fff;
+    --card-foreground: #111;
+    --muted-foreground: #555;
+    --border: #ddd;
+    --primary: #2c3e50;
+  }
+
+  [data-print-hide],
+  header,
+  nav,
+  footer,
+  button,
+  [role='button'] {
+    display: none !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  section,
+  [data-print-keep] {
+    break-inside: avoid;
+  }
+
+  img {
+    max-height: 180px;
+  }
+
+  body {
+    background: #fff !important;
   }
 }

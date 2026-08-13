@@ -1,29 +1,37 @@
 import React from 'react'
-import { Link } from 'react-router-dom';
-import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto';
+import { Link } from 'react-router-dom'
+import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
+import { Card, CardContent } from '@/components/ui/card'
+import { formatDayDate } from '@/lib/tripSchema'
 
-const UserTripCard = ({ trip }) => {
-    const location = trip?.tripData?.location;
-    const budget = trip?.tripData?.budget;
-    const days = trip?.tripData?.duration;
-
-    const photoUrl = usePlacePhoto(location)
+const UserTripCard = ({ trip, actions }) => {
+    const photoUrl = usePlacePhoto(trip?.location)
+    const days = trip?.duration
+    const startDate = formatDayDate(trip?.startDate)
 
     return (
-        <Link to={'/view-trip/' + trip?.id}>
-            <div className='hover:scale-105 hover:shadow-md transition-all'>
+        <Card className='overflow-hidden py-0 gap-0 h-full transition-shadow hover:shadow-md'>
+            <Link to={'/view-trip/' + trip?.id}>
                 <img
                     src={photoUrl}
                     onError={handleImageError}
-                    alt={location ?? 'Trip'}
-                    className='object-cover rounded-xl w-full h-[300px]'
+                    alt={trip?.location ?? 'Trip'}
+                    className='object-cover w-full h-[200px]'
                 />
-                <div>
-                    <h2 className='font-bold text-lg'>{location}</h2>
-                    <h2>{`${days} ${days == '1' ? 'Day' : 'Days'} trip with ${budget} budget`}</h2>
-                </div>
-            </div>
-        </Link>
+            </Link>
+            <CardContent className='p-4 flex items-start justify-between gap-2'>
+                <Link to={'/view-trip/' + trip?.id} className='min-w-0'>
+                    <h3 className='font-bold text-lg truncate'>{trip?.location}</h3>
+                    <p className='text-sm text-muted-foreground'>
+                        {`${days} ${days === 1 ? 'day' : 'days'} · ${trip?.budget} budget`}
+                    </p>
+                    {startDate && (
+                        <p className='text-sm text-muted-foreground'>From {startDate}</p>
+                    )}
+                </Link>
+                {actions}
+            </CardContent>
+        </Card>
     )
 }
 

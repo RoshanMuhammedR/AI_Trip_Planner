@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { budgetOptions, companionsOptions } from '@/constants/options';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { generateTrip } from '@/services/AIModel';
+import { generateSkeleton } from '@/services/AIModel';
+import { SCHEMA_VERSION } from '@/lib/tripSchema';
 
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
@@ -14,14 +15,17 @@ import { useNavigate } from 'react-router-dom';
 import SignInDialog from '@/components/custom/SignInDialog';
 import Container from '@/components/layout/Container';
 import { useAuth } from '@/contexts/AuthContext';
+import OptionCard from './components/OptionCard';
 
 
 function CreateTrip() {
   const { user } = useAuth();
+  const today = new Date().toISOString().slice(0, 10);
   const [isLoaded, setIsLoaded] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [form, setForm] = useState();
   const [showDialogue, setShowDialogue] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -58,8 +62,29 @@ function CreateTrip() {
     const value = e.target.value;
     setLocationQuery(value);
     setShowSuggestions(true);
+    setActiveIndex(-1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
+  };
+
+  // The dropdown was previously mouse-only — no way to pick a destination
+  // from the keyboard at all.
+  const handleLocationKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[activeIndex]);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setActiveIndex(-1);
+    }
   };
 
   const handleSelectSuggestion = (suggestion) => {
@@ -71,6 +96,7 @@ function CreateTrip() {
     setForm((prev) => ({ ...prev, location: text, locationPlaceId: prediction.placeId }));
     setSuggestions([]);
     setShowSuggestions(false);
+    setActiveIndex(-1);
     sessionTokenRef.current = null;
   };
 
@@ -95,21 +121,25 @@ function CreateTrip() {
 
     setSearching(true);
     try {
-      const tripData = await generateTrip({
+      // Only the shell is generated here — the individual days are filled in on
+      // the trip page, so the user gets a real page in seconds rather than
+      // staring at a spinner for the whole itinerary.
+      const skeleton = await generateSkeleton({
         location: form.location,
         noOfDays: form.noOfDays,
         budget: form.budget,
         people: form.people,
+        startDate: form.startDate,
       });
 
       // A failed parse used to still write the doc, leaving tripData undefined
       // and crashing the view page. Bail instead.
-      if (!tripData) {
+      if (!skeleton) {
         toast.error('The planner returned an unreadable itinerary. Please try again.');
         return;
       }
 
-      await saveAiTrip(tripData, currentUser);
+      await saveAiTrip(skeleton, currentUser);
     } catch (error) {
       toast.error(error.message ?? 'Could not generate your trip.');
     } finally {
@@ -117,13 +147,21 @@ function CreateTrip() {
     }
   }
 
-  const saveAiTrip = async (tripData, currentUser) => {
+  const saveAiTrip = async (skeleton, currentUser) => {
     // Random IDs, not Date.now() — sequential IDs are enumerable, and shared
     // trips are readable by link.
     const docID = crypto.randomUUID();
     await setDoc(doc(db, 'AITrips', docID), {
       userSelection: form,
-      tripData,
+      tripData: {
+        ...skeleton,
+        schemaVersion: SCHEMA_VERSION,
+        startDate: form.startDate ?? null,
+        location: skeleton.location ?? form.location,
+        budget: skeleton.budget ?? form.budget,
+        travelerType: skeleton.travelerType ?? form.people,
+        duration: Number(form.noOfDays),
+      },
       userId: currentUser.uid,
       userEmail: currentUser.email,
       createdAt: serverTimestamp(),
@@ -145,27 +183,45 @@ function CreateTrip() {
 
   return (
     <Container className='mt-10'>
-      <h2 className='font-bold text-3xl'>Tell us your travel preferences 🏕️🌴</h2>
-      <p className='mt-3 text-gray-500 text-xl'>
+      <h1 className='font-bold text-3xl'>Tell us your travel preferences 🏕️🌴</h1>
+      <p className='mt-3 text-muted-foreground text-lg sm:text-xl'>
         Just provide some basic information, and our trip planner will generate a customised itinerary based on your preferences.
       </p>
-      <div className='mt-20 flex flex-col gap-10'>
+      <div className='mt-12 flex flex-col gap-10'>
         <div className='relative'>
-          <h2 className='text-xl my-3 font-medium'>What is the destination of choice?</h2>
+          <h2 className='text-xl my-3 font-medium' id='destination-label'>What is the destination of choice?</h2>
           <Input
             value={locationQuery}
-            placeholder='Search for a destination'
+            placeholder={isLoaded ? 'Search for a destination' : 'Loading places…'}
             disabled={!isLoaded}
             onChange={handleLocationInputChange}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onKeyDown={handleLocationKeyDown}
+            role='combobox'
+            aria-expanded={showSuggestions && suggestions.length > 0}
+            aria-controls='destination-listbox'
+            aria-autocomplete='list'
+            aria-labelledby='destination-label'
+            aria-activedescendant={
+              activeIndex >= 0 ? `destination-option-${activeIndex}` : undefined
+            }
           />
           {showSuggestions && suggestions.length > 0 && (
-            <ul className='absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-auto shadow-lg'>
+            <ul
+              id='destination-listbox'
+              role='listbox'
+              className='absolute z-10 w-full bg-popover text-popover-foreground border rounded-md mt-1 max-h-60 overflow-auto shadow-lg'
+            >
               {suggestions.map((suggestion, index) => (
                 <li
-                  key={index}
-                  className='px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm'
+                  key={suggestion.placePrediction.placeId ?? index}
+                  id={`destination-option-${index}`}
+                  role='option'
+                  aria-selected={index === activeIndex}
+                  className={`px-4 py-2 cursor-pointer text-sm ${
+                    index === activeIndex ? 'bg-accent' : 'hover:bg-accent'
+                  }`}
                   onMouseDown={() => handleSelectSuggestion(suggestion)}
                 >
                   {suggestion.placePrediction.text.text}
@@ -174,42 +230,56 @@ function CreateTrip() {
             </ul>
           )}
         </div>
-        <div>
-          <h2 className='text-xl my-3 font-medium'>How many days are you planning your trip?</h2>
-          <Input type='number' placeholder={'Ex.3'}
-            onChange={(e) => handleFormChange('noOfDays', e.target.value)}
-          />
+        <div className='grid gap-6 sm:grid-cols-2'>
+          <div>
+            <h2 className='text-xl my-3 font-medium'>How many days?</h2>
+            <Input
+              type='number'
+              min={1}
+              max={7}
+              placeholder='Ex. 3'
+              value={form?.noOfDays ?? ''}
+              onChange={(e) => handleFormChange('noOfDays', e.target.value)}
+            />
+          </div>
+          <div>
+            <h2 className='text-xl my-3 font-medium'>
+              When do you leave? <span className='text-sm text-gray-500 font-normal'>(optional)</span>
+            </h2>
+            <Input
+              type='date'
+              min={today}
+              value={form?.startDate ?? ''}
+              onChange={(e) => handleFormChange('startDate', e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      <div className='mt-4'>
-        <h2 className='text-xl my-5 font-medium'>What is Your Budget?</h2>
-        <div className='grid grid-cols-3 gap-5 mt-5'>
-          {budgetOptions.map((item, index) => (
-            <div key={index}
-              className={`p-4 border rounded-lg hover:shadow-lg cursor-pointer ${form?.budget === item.title && 'shadow-lg border-[#2C3E50]'}`}
-              onClick={() => handleFormChange('budget', item.title)}
-            >
-              <h2 className='text-4xl'>{item.icon}</h2>
-              <h2 className='font-bold text-lg'>{item.title}</h2>
-              <h2 className='text-sm text-gray-500'>{item.desc}</h2>
-            </div>
+      <div className='mt-8'>
+        <h2 className='text-xl my-5 font-medium' id='budget-label'>What is Your Budget?</h2>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-5' role='radiogroup' aria-labelledby='budget-label'>
+          {budgetOptions.map((item) => (
+            <OptionCard
+              key={item.id}
+              item={item}
+              selected={form?.budget === item.title}
+              onSelect={() => handleFormChange('budget', item.title)}
+            />
           ))}
         </div>
       </div>
 
-      <div className='mt-4'>
-        <h2 className='text-xl my-5 font-medium'>Who do you plan on travelling with on next adventure?</h2>
-        <div className='grid grid-cols-3 gap-5 mt-5'>
-          {companionsOptions.map((item, index) => (
-            <div key={index}
-              className={`p-4 border rounded-lg hover:shadow-lg cursor-pointer ${form?.people === item.people && 'shadow-lg border-[#2C3E50]'}`}
-              onClick={() => handleFormChange('people', item.people)}
-            >
-              <h2 className='text-4xl'>{item.icon}</h2>
-              <h2 className='font-bold text-lg'>{item.title}</h2>
-              <h2 className='text-sm text-gray-500'>{item.desc}</h2>
-            </div>
+      <div className='mt-8'>
+        <h2 className='text-xl my-5 font-medium' id='companions-label'>Who are you travelling with?</h2>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5' role='radiogroup' aria-labelledby='companions-label'>
+          {companionsOptions.map((item) => (
+            <OptionCard
+              key={item.id}
+              item={item}
+              selected={form?.people === item.people}
+              onSelect={() => handleFormChange('people', item.people)}
+            />
           ))}
         </div>
       </div>

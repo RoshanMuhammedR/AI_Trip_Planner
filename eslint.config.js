@@ -35,8 +35,9 @@ export default defineConfig([
   },
   {
     // Context modules intentionally export a provider component alongside its
-    // hook; that pairing is the whole point of the file.
-    files: ['src/contexts/**/*.jsx'],
+    // hook; that pairing is the whole point of the file. shadcn/ui files are
+    // generated and pair components with their cva variant helpers.
+    files: ['src/contexts/**/*.jsx', 'src/components/ui/**/*.jsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
     },

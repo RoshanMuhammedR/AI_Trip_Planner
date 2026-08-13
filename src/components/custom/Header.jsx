@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/popover"
 import { Link } from 'react-router-dom';
 import SignInDialog from './SignInDialog';
+import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 
 
@@ -15,17 +16,19 @@ const Header = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div className='p-3 shadow-sm flex justify-between items-center'>
+    <header className='p-3 border-b flex justify-between items-center gap-2'>
       <Link to='/'>
         <img src='/logo.svg' alt='AI Trip Planner' className='h-10' />
       </Link>
-      {user ?
-        <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-2'>
+        <ThemeToggle />
+        {user ?
+        <>
           <Link to='/create-trip' className='hidden md:block'>
             <Button variant='outline' className='rounded-full '>+ Create Trip</Button>
           </Link>
           <Link to='/my-trips' className='hidden md:block'>
-            <Button variant='outline' className='rounded-full'>My Trip</Button>
+            <Button variant='outline' className='rounded-full'>My Trips</Button>
           </Link>
           <Popover>
             <PopoverTrigger aria-label='Account menu'>
@@ -49,12 +52,13 @@ const Header = () => {
               </div>
             </PopoverContent>
           </Popover>
-        </div>
+        </>
         :
-        <Button size="lg" onClick={() => setShowDialogue(true)}>Sign In</Button>
+        <Button onClick={() => setShowDialogue(true)}>Sign In</Button>
       }
+      </div>
       <SignInDialog open={showDialogue} onOpenChange={setShowDialogue} />
-    </div>
+    </header>
   )
 }
 

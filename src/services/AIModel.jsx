@@ -1,31 +1,83 @@
 import axios from 'axios'
 
 /**
- * Requests a trip plan from our own serverless endpoint, which holds the
- * AICredits key and builds the prompt. The client never sees either.
- *
- * @returns the parsed travelPlan object, or null if generation/parsing failed.
+ * Generation is split into a fast "skeleton" call plus one call per day, fired
+ * in parallel. That gives progressive rendering without needing to parse
+ * partial JSON mid-stream, keeps each response small enough for a small model
+ * to get right, and makes chat-to-refine the same call shape as a day.
  */
-export async function generateTrip({ location, noOfDays, budget, people }) {
+
+async function requestJson(payload) {
   let content
   try {
-    const response = await axios.post('/api/generate', { location, noOfDays, budget, people })
+    const response = await axios.post('/api/generate', payload)
     content = response.data?.content ?? ''
   } catch (error) {
-    // Surface the server's user-facing message when it sent one.
-    const message = error.response?.data?.error ?? 'Could not reach the trip generator.'
-    throw new Error(message)
+    throw new Error(error.response?.data?.error ?? 'Could not reach the trip generator.')
   }
 
-  // The model usually wraps JSON in a ```json fence, but not always.
-  const jsonMatch = content.match(/```json([\s\S]*?)```/)
-  const jsonString = jsonMatch ? jsonMatch[1].trim() : content.trim()
+  // json_object mode returns bare JSON, but the fallback path may still fence it.
+  const fenced = content.match(/```(?:json)?([\s\S]*?)```/)
+  const jsonString = (fenced ? fenced[1] : content).trim()
 
   try {
-    const jsonData = JSON.parse(jsonString)
-    return jsonData?.travelPlan ?? null
+    return JSON.parse(jsonString)
   } catch (e) {
-    console.error('Failed to parse trip JSON:', e, content)
+    console.error('Failed to parse model JSON:', e, content.slice(0, 500))
     return null
   }
+}
+
+/** Trip shell: hotels + day themes, no places yet. */
+export async function generateSkeleton({ location, noOfDays, budget, people, startDate }) {
+  const data = await requestJson({
+    mode: 'skeleton',
+    location,
+    noOfDays,
+    budget,
+    people,
+    startDate,
+  })
+  if (!data || !Array.isArray(data.itinerary)) return null
+
+  return {
+    ...data,
+    // The shell deliberately carries no places; null marks "not generated yet".
+    itinerary: data.itinerary.map((day, i) => ({
+      day: day.day ?? i + 1,
+      theme: day.theme ?? '',
+      bestTimeToVisit: day.bestTimeToVisit ?? '',
+      plan: null,
+    })),
+  }
+}
+
+/**
+ * The plan array for one day.
+ * @param instruction - optional natural-language steer, used by chat-to-refine.
+ * @returns array of places, or null if generation/parsing failed.
+ */
+export async function generateDay({
+  location,
+  budget,
+  people,
+  day,
+  theme,
+  date,
+  instruction,
+}) {
+  const data = await requestJson({
+    mode: 'day',
+    location,
+    budget,
+    people,
+    day,
+    theme,
+    date,
+    instruction,
+  })
+  if (!data) return null
+  // Accept either {plan:[...]} or a bare array, since small models drift.
+  const plan = Array.isArray(data) ? data : data.plan
+  return Array.isArray(plan) ? plan : null
 }
