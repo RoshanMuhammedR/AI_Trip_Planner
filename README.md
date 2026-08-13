@@ -14,9 +14,9 @@ AI Trip Planner is an intelligent travel assistant that helps users generate per
 Features
 --------
 
-- 🌐 **Google Gemini Integration**: Generates customized itineraries and hotel suggestions in JSON format based on user input.
+- 🌐 **Gemini via AICredits**: Generates customized itineraries and hotel suggestions in JSON, proxied through a serverless function so the API key never reaches the browser.
 - 🗺️ **Google Places & Images API**: Fetches precise location details and enhances itineraries with real-world images.
-- 👤 **Google OAuth 2.0**: Enables secure user authentication and account management.
+- 👤 **Firebase Auth (Google)**: Secure sign-in, with Firestore rules enforcing per-user trip ownership.
 - 📜 **Trip History**: Users can view and revisit previously planned trips.
 - 🧠 **AI Prompting**: Dynamic prompts designed to optimize responses from Gemini for travel planning.
 
@@ -40,20 +40,45 @@ cd AI_Trip_Planner
 # Install dependencies
 npm install
 
-# Start the development server
+# Copy the env template and fill in your keys
+cp .env.example .env
+```
+
+### Running locally
+
+Trip generation goes through a Vercel serverless function at `/api/generate`,
+which holds the AICredits key server-side. Plain `vite` doesn't serve `/api`, so:
+
+```bash
+# Full app, including trip generation (requires: npm i -g vercel && vercel link)
+npm run dev:api
+
+# UI only — faster, but "Generate Trip" will 404
 npm run dev
 ```
+
+> **Note on keys:** `AICREDITS_API_KEY` deliberately has no `VITE_` prefix. Vite
+> inlines every `VITE_*` variable into the client bundle, so anything prefixed
+> that way is public. Set the same variable in your Vercel project settings for
+> deployments.
+
+### Firebase setup
+
+1. **Authentication → Sign-in method → Google**: enable it, and add your dev and
+   production domains under **Authorized domains**.
+2. **Firestore → Rules**: deploy `firestore.rules` from the repo root. It allows
+   read-by-link (for sharing) but restricts writes to the trip's owner.
 
 Tech Stack
 ----------
 
-- **Frontend**: React.js, TailwindCSS
-- **Backend**: Node.js, Express.js
-- **Authentication**: Google OAuth 2.0
+- **Frontend**: React.js, TailwindCSS, shadcn/ui
+- **Backend**: Vercel serverless functions
+- **Authentication**: Firebase Auth (Google provider)
+- **Database**: Cloud Firestore
 - **APIs Used**:
-  - Google Gemini API
-  - Google Places API
-  - Google Images API
+  - AICredits gateway (Gemini)
+  - Google Places API (New)
 - **Deployment**: Vercel
 
 Author

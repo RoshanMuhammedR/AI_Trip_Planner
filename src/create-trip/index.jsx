@@ -1,21 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { loadGoogleScript } from '@/utils/loadGoogleScript.js'
 import { Input } from '@/components/ui/input';
-import { budgetOptions, companionsOptions, PROMPT } from '@/constants/options';
+import { budgetOptions, companionsOptions } from '@/constants/options';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { main } from '@/services/AIModel';
+import { generateTrip } from '@/services/AIModel';
 
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/services/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import SignInDialog from '@/components/custom/SignInDialog';
 import Container from '@/components/layout/Container';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 function CreateTrip() {
+  const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -74,42 +76,58 @@ function CreateTrip() {
 
   const navigate = useNavigate();
 
-  const onGenerate = async () => {
-
-    const user = localStorage.getItem('user');
-
-    if (!user) {
+  /**
+   * @param signedInUser - passed by SignInDialog when generation was blocked on
+   *   auth. The `user` from context hasn't propagated yet at that moment, so we
+   *   can't rely on the closure value.
+   */
+  const onGenerate = async (signedInUser) => {
+    const currentUser = signedInUser ?? user;
+    if (!currentUser) {
       setShowDialogue(true);
       return;
     }
-
 
     if (form?.noOfDays > 5 || !form?.budget || !form?.location || !form?.people) {
       toast('Please fill all details correctly')
       return;
     }
+
     setSearching(true);
-    const FINAL_PROMPT = PROMPT
-      .replace('{location}', form.location)
-      .replace('{noOfDays}', form.noOfDays)
-      .replace('{budget}', form.budget)
-      .replace('{people}', form.people)
-      .replace('{noOfDays}', form.noOfDays)
+    try {
+      const tripData = await generateTrip({
+        location: form.location,
+        noOfDays: form.noOfDays,
+        budget: form.budget,
+        people: form.people,
+      });
 
-    const result = await main(FINAL_PROMPT);
-    saveAiTrip(result);
-    setSearching(false);
+      // A failed parse used to still write the doc, leaving tripData undefined
+      // and crashing the view page. Bail instead.
+      if (!tripData) {
+        toast.error('The planner returned an unreadable itinerary. Please try again.');
+        return;
+      }
 
+      await saveAiTrip(tripData, currentUser);
+    } catch (error) {
+      toast.error(error.message ?? 'Could not generate your trip.');
+    } finally {
+      setSearching(false);
+    }
   }
 
-  const saveAiTrip = async (TripData) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const docID = Date.now().toString();
-    await setDoc(doc(db, "AITrips", docID), {
+  const saveAiTrip = async (tripData, currentUser) => {
+    // Random IDs, not Date.now() — sequential IDs are enumerable, and shared
+    // trips are readable by link.
+    const docID = crypto.randomUUID();
+    await setDoc(doc(db, 'AITrips', docID), {
       userSelection: form,
-      tripData: TripData,
-      userEmail: user?.email,
-      id: docID
+      tripData,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      createdAt: serverTimestamp(),
+      id: docID,
     });
     navigate('/view-trip/' + docID);
   }
@@ -196,7 +214,7 @@ function CreateTrip() {
         </div>
       </div>
       <div className="my-5 flex justify-end">
-        <Button size={'lg'} onClick={onGenerate} disabled={searching}>
+        <Button size={'lg'} onClick={() => onGenerate()} disabled={searching}>
           {searching ? <AiOutlineLoading3Quarters className='size-7 animate-spin' /> : 'Generate Trip'}
         </Button>
       </div>

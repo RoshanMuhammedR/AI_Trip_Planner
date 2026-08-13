@@ -6,13 +6,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Link } from 'react-router-dom';
-import { googleLogout } from '@react-oauth/google';
 import SignInDialog from './SignInDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 const Header = () => {
   const [showDialogue, setShowDialogue] = useState(false);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { user, logout } = useAuth();
 
   return (
     <div className='p-3 shadow-sm flex justify-between items-center'>
@@ -30,8 +30,8 @@ const Header = () => {
           <Popover>
             <PopoverTrigger aria-label='Account menu'>
               <img
-                src={user?.picture}
-                alt={user?.name ?? 'Your account'}
+                src={user?.photoURL}
+                alt={user?.displayName ?? 'Your account'}
                 className='size-[35px] rounded-full'
               />
             </PopoverTrigger>
@@ -42,11 +42,7 @@ const Header = () => {
                 <button
                   type='button'
                   className='text-left cursor-pointer'
-                  onClick={() => {
-                    googleLogout();
-                    localStorage.clear();
-                    window.location.reload();
-                  }}
+                  onClick={logout}
                 >
                   Logout
                 </button>

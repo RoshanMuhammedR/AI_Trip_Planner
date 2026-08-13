@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /AITrips/{tripId} {
+      // Trips are readable by anyone holding the link — this is what makes
+      // sharing work. Document IDs are random UUIDs (not the old sequential
+      // Date.now() values) so the collection can't be enumerated.
+      allow read: if true;
+
+      // A trip may only be created by a signed-in user, stamped with their own uid.
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      // Owner-only mutation. The userEmail branch covers trips saved before the
+      // Firebase Auth migration, which have no userId field.
+      allow update, delete: if request.auth != null
+                            && (resource.data.userId == request.auth.uid
+                                || resource.data.userEmail == request.auth.token.email);
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
