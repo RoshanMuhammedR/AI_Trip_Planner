@@ -14,11 +14,14 @@ AI Trip Planner is an intelligent travel assistant that helps users generate per
 Features
 --------
 
-- 🌐 **Gemini via AICredits**: Generates customized itineraries and hotel suggestions in JSON, proxied through a serverless function so the API key never reaches the browser.
-- 🗺️ **Google Places & Images API**: Fetches precise location details and enhances itineraries with real-world images.
-- 👤 **Firebase Auth (Google)**: Secure sign-in, with Firestore rules enforcing per-user trip ownership.
-- 📜 **Trip History**: Users can view and revisit previously planned trips.
-- 🧠 **AI Prompting**: Dynamic prompts designed to optimize responses from Gemini for travel planning.
+- ⚡ **Progressive generation**: a fast skeleton call lands you on a real trip page in seconds, then each day is generated in parallel and fills in live — no long blank spinner.
+- 🗺️ **Interactive day map**: every stop plotted as a numbered marker coloured by day; click a marker to jump to its card, hover a card to highlight its marker.
+- ✨ **Chat-to-refine**: reshape any day in plain language ("make day 2 more relaxed", "more food, less museums"), with one-click Undo.
+- 📅 **Real dates & budgets**: optional start date gives per-day dates, seasonality-aware suggestions, `.ics` calendar export, and an estimated trip total.
+- 🔗 **Share & export**: shareable read-only links, native share sheet on mobile, and a print stylesheet for clean PDFs.
+- 🌓 **Light & dark themes**, responsive layouts, and keyboard-accessible controls throughout.
+- 👤 **Firebase Auth (Google)**: secure sign-in, with Firestore rules enforcing per-user trip ownership.
+- 🔒 **Server-side AI key**: generation is proxied through a Vercel function, so the API key never reaches the browser.
 
 Demo
 ----
@@ -76,10 +79,28 @@ Tech Stack
 - **Backend**: Vercel serverless functions
 - **Authentication**: Firebase Auth (Google provider)
 - **Database**: Cloud Firestore
+- **Maps**: `@vis.gl/react-google-maps`
 - **APIs Used**:
   - AICredits gateway (Gemini)
   - Google Places API (New)
 - **Deployment**: Vercel
+
+### How generation works
+
+Rather than one long request for the whole itinerary, generation is split:
+
+1. **Skeleton** — one small, fast call returning hotels plus a day-by-day shell
+   (theme + best time to visit). The trip is saved and rendered immediately.
+2. **Days** — one call per day, fired in parallel, each returning just that
+   day's places. They stream into the page as they land.
+
+This keeps each response small enough for a fast model to return valid JSON,
+makes total latency roughly the slowest single day instead of the sum, and means
+a reload mid-generation resumes rather than leaving a half-built trip. Refining a
+day later reuses the exact same call.
+
+Trips are normalized through `src/lib/tripSchema.js` on read, so documents saved
+before the schema change still render correctly.
 
 Author
 ------
