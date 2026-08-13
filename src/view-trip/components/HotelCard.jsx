@@ -1,5 +1,5 @@
 import React from 'react'
-import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
+import { usePlaceLookup, handleImageError } from '@/hooks/usePlacePhoto'
 import { formatCost } from '@/lib/tripSchema'
 import { mapsLink } from '@/lib/maps'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,12 +9,12 @@ const HotelCard = ({ hotel }) => {
     const query = hotel?.hotelName
         ? [hotel.hotelName, hotel.hotelAddress].filter(Boolean).join(', ')
         : null
-    const photoUrl = usePlacePhoto(query)
+    const { photoUrl, placeId } = usePlaceLookup(query)
     const price = formatCost(hotel?.price)
 
     return (
         <a
-            href={mapsLink({ coordinates: hotel?.geoCoordinates, query })}
+            href={mapsLink({ coordinates: hotel?.geoCoordinates, query, placeId })}
             target='_blank'
             rel='noreferrer'
             className='group block'

@@ -1,4 +1,4 @@
-import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
+import { usePlaceLookup, handleImageError } from '@/hooks/usePlacePhoto'
 import { formatCost } from '@/lib/tripSchema'
 import { mapsLink } from '@/lib/maps'
 import { ExternalLink, CornerDownRight } from 'lucide-react'
@@ -10,7 +10,7 @@ const MapInfoCard = ({ point, tripLocation, onScrollToCard }) => {
   const query = isHotel
     ? [data.hotelName, data.hotelAddress].filter(Boolean).join(', ')
     : `${data.placeName}, ${tripLocation}`
-  const photoUrl = usePlacePhoto(query)
+  const { photoUrl, placeId } = usePlaceLookup(query)
   const cost = formatCost(isHotel ? data.price : data.ticketPricing)
 
   return (
@@ -44,7 +44,11 @@ const MapInfoCard = ({ point, tripLocation, onScrollToCard }) => {
           </button>
         )}
         <a
-          href={mapsLink({ coordinates: { latitude: point.lat, longitude: point.lng }, query })}
+          href={mapsLink({
+            coordinates: { latitude: point.lat, longitude: point.lng },
+            query,
+            placeId,
+          })}
           target='_blank'
           rel='noreferrer'
           className='flex items-center gap-1.5 text-[12px] font-medium text-primary hover:underline'

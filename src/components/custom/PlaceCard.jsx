@@ -1,17 +1,17 @@
 import React from 'react'
-import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
+import { usePlaceLookup, handleImageError } from '@/hooks/usePlacePhoto'
 import { formatCost } from '@/lib/tripSchema'
 import { mapsLink } from '@/lib/maps'
 import { Card } from '@/components/ui/card'
 
 const PlaceCard = ({ place, trip_place, onHover, isActive }) => {
   const query = place?.placeName ? `${place.placeName}, ${trip_place}` : null
-  const photoUrl = usePlacePhoto(query)
+  const { photoUrl, placeId } = usePlaceLookup(query)
   const price = formatCost(place?.ticketPricing)
 
   return (
     <a
-      href={mapsLink({ coordinates: place?.geoCoordinates, query })}
+      href={mapsLink({ coordinates: place?.geoCoordinates, query, placeId })}
       target='_blank'
       rel='noreferrer'
       className='group block h-full'
