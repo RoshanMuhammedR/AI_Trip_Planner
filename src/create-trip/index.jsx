@@ -7,23 +7,12 @@ import { toast } from 'sonner';
 import { main } from '@/services/AIModel';
 
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { FcGoogle } from "react-icons/fc";
 
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogClose,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/services/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import SignInDialog from '@/components/custom/SignInDialog';
+import Container from '@/components/layout/Container';
 
 
 function CreateTrip() {
@@ -72,21 +61,18 @@ function CreateTrip() {
   };
 
   const handleSelectSuggestion = (suggestion) => {
-    const text = suggestion.placePrediction.text.text;
+    const prediction = suggestion.placePrediction;
+    const text = prediction.text.text;
     setLocationQuery(text);
-    handleFormChange('location', text);
+    // Keep the placeId too — it makes photo lookups exact and gives the map a
+    // reliable center, instead of re-resolving the display text later.
+    setForm((prev) => ({ ...prev, location: text, locationPlaceId: prediction.placeId }));
     setSuggestions([]);
     setShowSuggestions(false);
     sessionTokenRef.current = null;
   };
 
   const navigate = useNavigate();
-
-  const login = useGoogleLogin({
-    onSuccess: (codeResp) => GetUserProfile(codeResp),
-    onError: (error) => console.log(error)
-  })
-
 
   const onGenerate = async () => {
 
@@ -128,29 +114,6 @@ function CreateTrip() {
     navigate('/view-trip/' + docID);
   }
 
-  const GetUserProfile = async (token) => {
-    if (!token?.access_token) {
-      console.error("Access token is missing");
-      return null;
-    }
-
-    try {
-      const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-          Accept: 'application/json',
-        },
-      });
-      localStorage.setItem('user', JSON.stringify(response.data));
-      setShowDialogue(false);
-      onGenerate();
-    } catch (error) {
-      console.error("Error fetching user profile:", error.response?.data || error.message);
-      return null;
-    }
-  };
-
-
   useEffect(() => {
     loadGoogleScript()
     const interval = setInterval(() => {
@@ -163,7 +126,7 @@ function CreateTrip() {
   }, []);
 
   return (
-    <div className='px-5 sm:px-10 md:px-20 lg:px-32 xl:px-56 2xl:px-72 mt-10'>
+    <Container className='mt-10'>
       <h2 className='font-bold text-3xl'>Tell us your travel preferences 🏕️🌴</h2>
       <p className='mt-3 text-gray-500 text-xl'>
         Just provide some basic information, and our trip planner will generate a customised itinerary based on your preferences.
@@ -207,7 +170,7 @@ function CreateTrip() {
           {budgetOptions.map((item, index) => (
             <div key={index}
               className={`p-4 border rounded-lg hover:shadow-lg cursor-pointer ${form?.budget === item.title && 'shadow-lg border-[#2C3E50]'}`}
-              onClick={(e) => handleFormChange('budget', item.title)}
+              onClick={() => handleFormChange('budget', item.title)}
             >
               <h2 className='text-4xl'>{item.icon}</h2>
               <h2 className='font-bold text-lg'>{item.title}</h2>
@@ -223,7 +186,7 @@ function CreateTrip() {
           {companionsOptions.map((item, index) => (
             <div key={index}
               className={`p-4 border rounded-lg hover:shadow-lg cursor-pointer ${form?.people === item.people && 'shadow-lg border-[#2C3E50]'}`}
-              onClick={(e) => handleFormChange('people', item.people)}
+              onClick={() => handleFormChange('people', item.people)}
             >
               <h2 className='text-4xl'>{item.icon}</h2>
               <h2 className='font-bold text-lg'>{item.title}</h2>
@@ -238,31 +201,12 @@ function CreateTrip() {
         </Button>
       </div>
 
-      <Dialog open={showDialogue} onOpenChange={setShowDialogue}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogDescription className='text-[#2C3E50]'>
-              <img src='/logo.svg' className='h-10' />
-              <h2 className='font-bold text-lg mt-7'>Sign in with Google</h2>
-              <p>Sign in to the App with Google Auth securely</p>
-              <Button
-                className='w-full mt-5 flex gap-4 items-center'
-                onClick={login}
-              >
-                <FcGoogle className='size-7' />
-                Sign in With Google
-              </Button>
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogClose asChild>
-            <button className="absolute right-4 top-3 text-gray-500 hover:text-gray-700">
-              ✕
-            </button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <SignInDialog
+        open={showDialogue}
+        onOpenChange={setShowDialogue}
+        onSignedIn={onGenerate}
+      />
+    </Container>
   )
 }
 

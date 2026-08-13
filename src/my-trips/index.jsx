@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import UserTripCard from './components/UserTripCard';
+import Container from '@/components/layout/Container';
 const MyTrips = () => {
     const navigate = useNavigate();
     const [trips, setTrips] = useState([]);
@@ -21,13 +22,13 @@ const MyTrips = () => {
         const q = query(collection(db, 'AITrips'), where("userEmail", '==', user?.email));
         const querySnapShot = await getDocs(q);
         setTrips([]);
-        querySnapShot.forEach((doc, idx) => {
+        querySnapShot.forEach((doc) => {
             setTrips(prevVal => [...prevVal, doc.data()]);
         })
     }
     return (
 
-        <div className='px-5 sm:px-10 md:px-20 lg:px-32 xl:px-56 2xl:px-72 mt-10'>
+        <Container className='mt-10'>
             <h2 className='font-bold text-3xl'>My Trips</h2>
 
             <div className='grid grid-cols-1 md:grid-cols-3 gap-5 mt-10'>
@@ -42,7 +43,7 @@ const MyTrips = () => {
                 )}
 
             </div>
-        </div>
+        </Container>
     )
 }
 

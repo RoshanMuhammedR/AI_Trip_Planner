@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import InfoSection from '../components/InfoSection';
 import Hotels from '../components/Hotels';
 import PlacesToVisit from '../components/PlacesToVisit';
-import Footer from '@/components/custom/Footer';
+import Container from '@/components/layout/Container';
 
 const ViewTrip = () => {
   const [trip,setTrip] = useState();
@@ -29,16 +29,14 @@ const ViewTrip = () => {
     ,[tripId])
 
   return (
-    <div className='p-10 md:px-20 lg:px-44 xl:px-56'>
+    <Container className='py-10'>
       {/* info section */}
       <InfoSection trip={trip}/>
       {/* Hotel section */}
       <Hotels trip={trip}/>
       {/* place to visit  */}
       <PlacesToVisit trip={trip} />
-      {/* footer */}
-      <Footer />
-    </div>
+    </Container>
   )
 }
 
