@@ -4,7 +4,6 @@ import { Maximize2, Minimize2, MapPin as MapPinIcon } from 'lucide-react'
 import { useMapPoints } from '@/hooks/useMapPoints'
 import MapPin from './MapPin'
 import MapInfoCard from './MapInfoCard'
-import MapLegend from './MapLegend'
 import DayRoute from './DayRoute'
 
 const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID
@@ -37,10 +36,23 @@ function FitBounds({ points }) {
   return null
 }
 
-const TripMap = ({ trip, activeKey, onSelectPlace, onHoverPlace, className = '' }) => {
-  const { placePoints, hotelPoints, unmappableCount, dayNumbers } = useMapPoints(trip)
-  const [selectedDay, setSelectedDay] = useState(null)
-  const [showHotels, setShowHotels] = useState(false)
+/**
+ * `selectedDay` and `showHotels` are props, not state: the same filter drives
+ * the itinerary panel, so a single DayFilter owns both.
+ */
+const TripMap = ({
+  trip,
+  activeKey,
+  onSelectPlace,
+  onHoverPlace,
+  selectedDay = null,
+  showHotels = false,
+  // Inside the split workspace the map is edge-to-edge, so it drops its own
+  // card chrome.
+  bare = false,
+  className = '',
+}) => {
+  const { placePoints, hotelPoints, unmappableCount } = useMapPoints(trip)
   const [infoPoint, setInfoPoint] = useState(null)
   const [fullscreen, setFullscreen] = useState(false)
 
@@ -98,7 +110,7 @@ const TripMap = ({ trip, activeKey, onSelectPlace, onHoverPlace, className = '' 
       className={
         fullscreen
           ? 'fixed inset-0 z-50 flex flex-col bg-background'
-          : `flex flex-col overflow-hidden rounded-xl border ${className}`
+          : `flex flex-col overflow-hidden ${bare ? '' : 'rounded-xl border'} ${className}`
       }
       data-print-hide
     >
@@ -160,16 +172,6 @@ const TripMap = ({ trip, activeKey, onSelectPlace, onHoverPlace, className = '' 
           {fullscreen ? <Minimize2 className='size-4' /> : <Maximize2 className='size-4' />}
         </button>
       </div>
-
-      <MapLegend
-        dayNumbers={dayNumbers}
-        itinerary={trip?.itinerary}
-        selectedDay={selectedDay}
-        onSelectDay={setSelectedDay}
-        hasHotels={hotelPoints.length > 0}
-        showHotels={showHotels}
-        onToggleHotels={setShowHotels}
-      />
 
       {unmappableCount > 0 && (
         <p className='border-t bg-card px-2 py-1.5 text-xs text-muted-foreground'>

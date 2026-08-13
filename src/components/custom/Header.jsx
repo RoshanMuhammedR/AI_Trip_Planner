@@ -14,8 +14,10 @@ const Header = () => {
   const [showDialogue, setShowDialogue] = useState(false);
   const { user, logout } = useAuth();
 
+  // h-16 is load-bearing: the trip workspace sizes itself with
+  // calc(100dvh-4rem). Border-box keeps that exact, border included.
   return (
-    <header className='p-3 border-b flex justify-between items-center gap-2'>
+    <header className='h-16 px-3 border-b flex justify-between items-center gap-2'>
       <Link to='/'>
         <img src='/logo.svg' alt='AI Trip Planner' className='h-10' />
       </Link>

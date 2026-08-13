@@ -4,16 +4,14 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner';
 import InfoSection from '../components/InfoSection';
-import Hotels from '../components/Hotels';
-import PlacesToVisit from '../components/PlacesToVisit';
+import HotelsSection from '../components/HotelsSection';
+import TripWorkspace from '../components/TripWorkspace';
 import Container from '@/components/layout/Container';
 import { Skeleton } from '@/components/ui/skeleton';
 import { normalizeTrip } from '@/lib/tripSchema';
 import { useTripGeneration } from '@/hooks/useTripGeneration';
 import { useAuth } from '@/contexts/AuthContext';
 import NotFound from '@/components/layout/NotFound';
-import TripMap from '../components/TripMap';
-import RefineBar from '../components/RefineBar';
 import { useTripRefine } from '@/hooks/useTripRefine';
 
 const ViewTrip = () => {
@@ -64,21 +62,18 @@ const ViewTrip = () => {
 
   const isOwner = Boolean(user && trip && (trip.userId === user.uid || trip.userEmail === user.email));
 
-  const { generatingDays, failedDays, retryDay } = useTripGeneration({
+  const generation = useTripGeneration({
     trip,
     tripId,
     isOwner,
     onDayGenerated: handleDayGenerated,
   });
 
-  const { refineDay, busy: refining } = useTripRefine({
+  const refine = useTripRefine({
     trip,
     tripId,
     onDayChanged: handleDayGenerated,
   });
-
-  // Nothing to refine until at least one day has finished generating.
-  const hasGeneratedDays = Boolean(trip?.itinerary?.some((d) => d.plan !== null));
 
   if (missing) return <NotFound />;
 
@@ -103,51 +98,25 @@ const ViewTrip = () => {
     );
   }
 
-  // Clicking a marker scrolls its card into view and flashes the highlight.
-  const handleSelectPlace = (point) => {
-    setActiveKey(point.key);
-    document
-      .getElementById(`place-${point.key}`)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
   return (
-    <Container className='py-10 max-w-7xl'>
-      <InfoSection trip={trip} />
-      <Hotels trip={trip} />
+    <>
+      <Container className='pt-10 pb-8 max-w-7xl'>
+        <InfoSection trip={trip} />
+        <HotelsSection trip={trip} />
+      </Container>
 
-      {/* One map instance, reordered by CSS: above the itinerary on mobile,
-          sticky beside it on desktop. Rendering it twice would mount Google
-          Maps twice. */}
-      <div className='mt-8 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8 lg:items-start'>
-        <div className='order-2 lg:order-1'>
-          {/* Owner-only in the UI; firestore.rules enforces it server-side too. */}
-          {isOwner && hasGeneratedDays && (
-            <RefineBar days={trip.itinerary} onRefine={refineDay} busy={refining} />
-          )}
-
-          <PlacesToVisit
-            trip={trip}
-            generatingDays={generatingDays}
-            failedDays={failedDays}
-            onRetryDay={retryDay}
-            canRetry={isOwner}
-            activeKey={activeKey}
-            onHoverPlace={setActiveKey}
-          />
-        </div>
-
-        <div className='order-1 mb-6 lg:order-2 lg:mb-0 lg:sticky lg:top-6'>
-          <TripMap
-            trip={trip}
-            activeKey={activeKey}
-            onSelectPlace={handleSelectPlace}
-            onHoverPlace={setActiveKey}
-            className='h-[300px] lg:h-[calc(100vh-8rem)]'
-          />
-        </div>
-      </div>
-    </Container>
+      {/* Rendered outside Container so the workspace can go full-bleed — the
+          map was previously capped at a 400px column and couldn't grow. */}
+      <TripWorkspace
+        trip={trip}
+        generation={generation}
+        refine={refine}
+        isOwner={isOwner}
+        activeKey={activeKey}
+        onHoverPlace={setActiveKey}
+        onActivateKey={setActiveKey}
+      />
+    </>
   )
 }
 
