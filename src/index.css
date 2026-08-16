@@ -126,6 +126,23 @@
     color: inherit !important;
   }
 
+  /* The trip workspace is a fixed-height shell whose itinerary scrolls inside
+     its own container. Left alone, print captures only the first viewport and
+     silently drops the rest of the trip, so height and overflow are released
+     and the panel takes the full page width once the map is hidden. */
+  [data-print-expand] {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  [data-print-full] {
+    width: 100% !important;
+    max-width: none !important;
+    border-right: 0 !important;
+  }
+
   section,
   [data-print-keep] {
     break-inside: avoid;

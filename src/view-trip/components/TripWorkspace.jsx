@@ -74,12 +74,18 @@ const TripWorkspace = ({
         })}
       </div>
 
-      <div className='flex h-[calc(100dvh-4rem)] min-h-[520px]'>
+      {/* data-print-expand / -full: on screen this is a fixed-height shell with
+          an internally scrolling itinerary, which printed as-is clips the PDF to
+          one viewport. The print stylesheet releases the height and overflow and
+          gives the panel the full page, since the map is hidden anyway. */}
+      <div className='flex h-[calc(100dvh-4rem)] min-h-[520px]' data-print-expand>
         <aside
           className={`w-full flex-col border-r lg:flex lg:w-[44%] lg:max-w-[620px] xl:w-[40%]
             ${mobileView === 'map' ? 'hidden' : 'flex'}`}
+          data-print-expand
+          data-print-full
         >
-          <div className='sticky top-0 z-10 border-b bg-card px-4 py-2.5'>
+          <div className='sticky top-0 z-10 border-b bg-card px-4 py-2.5' data-print-hide>
             <DayFilter
               dayNumbers={dayNumbers}
               itinerary={trip?.itinerary}
@@ -91,7 +97,7 @@ const TripWorkspace = ({
             />
           </div>
 
-          <div className='min-h-0 flex-1 overflow-y-auto'>
+          <div className='min-h-0 flex-1 overflow-y-auto' data-print-expand>
             <ItineraryPanel
               trip={trip}
               generatingDays={generation.generatingDays}
