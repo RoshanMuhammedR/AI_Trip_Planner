@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { toast } from 'sonner'
 import { Share2, Link as LinkIcon, Printer, CalendarPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,30 +9,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { downloadIcs } from '@/lib/calendar'
+import ShareDialog from './ShareDialog'
 
 const ShareMenu = ({ trip }) => {
+  const [shareOpen, setShareOpen] = useState(false)
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   const copyLink = async () => {
     try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
       await navigator.clipboard.writeText(shareUrl)
       toast.success('Link copied')
-    } catch {
-      toast.error('Could not copy the link')
+    } catch (error) {
+      console.error('Copy failed:', error)
+      // Rather than dead-ending on a toast, fall back to the dialog — the link
+      // is visible and selectable there, so copying is still one gesture away.
+      setShareOpen(true)
     }
-  }
-
-  const share = async () => {
-    // Web Share gives the native sheet on mobile; fall back to copying.
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `Trip to ${trip?.location}`, url: shareUrl })
-        return
-      } catch (error) {
-        if (error?.name === 'AbortError') return
-      }
-    }
-    copyLink()
   }
 
   const exportCalendar = () => {
@@ -42,28 +35,41 @@ const ShareMenu = ({ trip }) => {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant='outline' className='gap-2'>
-          <Share2 className='size-4' />
-          Share
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align='end'>
-        <DropdownMenuItem onClick={share}>
-          <Share2 className='size-4' /> Share trip
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={copyLink}>
-          <LinkIcon className='size-4' /> Copy link
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={exportCalendar}>
-          <CalendarPlus className='size-4' /> Add to calendar
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => window.print()}>
-          <Printer className='size-4' /> Print / Save as PDF
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant='outline' className='gap-2' data-print-hide>
+            <Share2 className='size-4' />
+            Share
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end'>
+          {/* Opens the popup rather than calling navigator.share directly: the
+              native sheet is missing on most desktops, and dismissing it threw
+              an AbortError the old handler swallowed — so the button looked
+              like it did nothing at all. */}
+          <DropdownMenuItem onClick={() => setShareOpen(true)}>
+            <Share2 className='size-4' /> Share trip
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={copyLink}>
+            <LinkIcon className='size-4' /> Copy link
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={exportCalendar}>
+            <CalendarPlus className='size-4' /> Add to calendar
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => window.print()}>
+            <Printer className='size-4' /> Print / Save as PDF
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        trip={trip}
+        shareUrl={shareUrl}
+      />
+    </>
   )
 }
 

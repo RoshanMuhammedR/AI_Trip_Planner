@@ -1,7 +1,7 @@
 import { db } from '@/services/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc } from 'firebase/firestore';
 import React, { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner';
 import InfoSection from '../components/InfoSection';
 import HotelsSection from '../components/HotelsSection';
@@ -20,8 +20,10 @@ const ViewTrip = () => {
   const [missing, setMissing] = useState(false);
   // Shared between the map and the cards, so hovering one highlights the other.
   const [activeKey, setActiveKey] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { tripId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!tripId) return;
@@ -62,6 +64,27 @@ const ViewTrip = () => {
 
   const isOwner = Boolean(user && trip && (trip.userId === user.uid || trip.userEmail === user.email));
 
+  /**
+   * Unlike the My Trips list there's no row to optimistically remove here —
+   * we're looking at the thing being deleted. So the write is awaited and the
+   * navigation only happens once Firestore has actually accepted it; a denied
+   * delete leaves the user on an intact trip with an explanation.
+   */
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete your trip to ${trip.location}? This can't be undone.`)) return;
+
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'AITrips', tripId));
+      toast.success('Trip deleted');
+      navigate('/my-trips');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast.error('Could not delete this trip.');
+      setDeleting(false);
+    }
+  };
+
   const generation = useTripGeneration({
     trip,
     tripId,
@@ -101,7 +124,12 @@ const ViewTrip = () => {
   return (
     <>
       <Container className='pt-10 pb-8 max-w-7xl'>
-        <InfoSection trip={trip} />
+        <InfoSection
+          trip={trip}
+          isOwner={isOwner}
+          onDelete={handleDelete}
+          deleting={deleting}
+        />
         <HotelsSection trip={trip} />
       </Container>
 

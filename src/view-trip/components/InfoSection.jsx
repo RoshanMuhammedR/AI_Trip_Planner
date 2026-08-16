@@ -3,8 +3,9 @@ import { usePlacePhoto, handleImageError } from '@/hooks/usePlacePhoto'
 import { Badge } from '@/components/ui/badge'
 import { formatDayDate, formatCost } from '@/lib/tripSchema'
 import ShareMenu from './ShareMenu'
+import TripActionsMenu from './TripActionsMenu'
 
-const InfoSection = ({ trip }) => {
+const InfoSection = ({ trip, isOwner, onDelete, deleting }) => {
   const location = trip?.location
   const photoUrl = usePlacePhoto(location)
   const startDate = formatDayDate(trip?.startDate)
@@ -30,7 +31,13 @@ const InfoSection = ({ trip }) => {
             {total && <Badge variant='secondary'>≈ {total} total</Badge>}
           </div>
         </div>
-        <ShareMenu trip={trip} />
+        <div className='flex items-center gap-2'>
+          <ShareMenu trip={trip} />
+          {/* Owner-only: someone viewing a shared link gets no delete control. */}
+          {isOwner && (
+            <TripActionsMenu trip={trip} onDelete={onDelete} deleting={deleting} />
+          )}
+        </div>
       </div>
     </div>
   )

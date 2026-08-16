@@ -35,21 +35,33 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
+/**
+ * forwardRef is required here, not optional polish.
+ *
+ * These shadcn components ship in the React 19 style, where `ref` arrives as a
+ * plain prop. This project is on React 18, where it does not. Without
+ * forwardRef, any Radix `asChild` trigger wrapping a <Button> — every dropdown
+ * and popover in the app — hands its ref to a function component that can't
+ * accept one, leaving Radix's popper with a null anchor. The menu then has
+ * nothing to position against and never opens, with no error beyond a console
+ * warning. Input is wrapped for the same reason.
+ */
+const Button = React.forwardRef(function Button({
   className,
   variant,
   size,
   asChild = false,
   ...props
-}) {
+}, ref) {
   const Comp = asChild ? Slot : "button"
 
   return (
     <Comp
       data-slot="button"
+      ref={ref}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props} />
   );
-}
+})
 
 export { Button, buttonVariants }
